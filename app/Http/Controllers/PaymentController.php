@@ -10,16 +10,17 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Midtrans\Config;
 use Midtrans\Snap;
+use Midtrans\Transaction;
 
 class PaymentController extends Controller
 {
     public function __construct()
     {
-        // Set konfigurasi Midtrans
+        // Set konfigurasi Midtrans resmi dari .env
         Config::$serverKey = config('midtrans.server_key');
-        Config::$isProduction = config('midtrans.is_production');
-        Config::$isSanitized = config('midtrans.is_sanitized');
-        Config::$is3ds = config('midtrans.is_3ds');
+        Config::$isProduction = config('midtrans.is_production', false);
+        Config::$isSanitized = true;
+        Config::$is3ds = true;
     }
 
     public function show(Registration $registration)
@@ -34,15 +35,18 @@ class PaymentController extends Controller
             return redirect()->route('registrations.index')->with('error', 'Data pembayaran tidak ditemukan.');
         }
 
+        // Cek status otomatis langsung ke server Midtrans jika status masih pending
+        if ($payment->status === 'pending') {
+            $this->checkMidtransStatusDirectly($payment);
+        }
+
         // Jika sudah sukses/lunas langsung arahkan ke tiket
         if ($payment->status === 'success' || $payment->status === 'settlement') {
             return redirect()->route('tickets.show', $registration->ticket->id ?? $registration->id);
         }
 
-        $snapToken = $payment->snap_token;
-
-        // Buat snap token jika belum ada atau kadaluarsa
-        if (!$snapToken) {
+        // Buat Snap Transaction resmi ke Midtrans jika belum ada
+        if (!$payment->payment_url || !$payment->snap_token) {
             $user = $registration->user;
             $workshop = $registration->workshop;
 
@@ -61,29 +65,66 @@ class PaymentController extends Controller
                         'id' => 'WS-' . $workshop->id,
                         'price' => (int) $payment->jumlah,
                         'quantity' => 1,
-                        'name' => mb_substr($workshop->nama_workshop, 0, 40),
+                        'name' => mb_substr($workshop->nama_workshop, 0, 45),
                     ]
                 ],
             ];
 
             try {
-                $snapToken = Snap::getSnapToken($params);
-                $payment->update(['snap_token' => $snapToken]);
+                $tx = Snap::createTransaction($params);
+                $payment->update([
+                    'snap_token' => $tx->token,
+                    'payment_url' => $tx->redirect_url,
+                ]);
             } catch (\Exception $e) {
-                // Fallback token simulator jika server key sandbox dummy / offline
-                $snapToken = 'DEMO_SNAP_' . md5($payment->order_id);
-                $payment->update(['snap_token' => $snapToken]);
+                // Jangan crash, log error
+                report($e);
             }
         }
 
-        $clientKey = config('midtrans.client_key');
-
-        return view('payments.show', compact('registration', 'payment', 'snapToken', 'clientKey'));
+        return view('payments.show', compact('registration', 'payment'));
     }
 
     /**
-     * Endpoint Simulasi Bayar (Sesuai LKPD Point 04: "Setelah simulasi bayar, verifikasi status melalui backend")
+     * Cek status pembayaran langsung ke server Midtrans (Verifikasi status LKPD 04)
      */
+    public function checkStatus(Payment $payment)
+    {
+        $this->checkMidtransStatusDirectly($payment);
+
+        if ($payment->status === 'success' || $payment->status === 'settlement') {
+            return redirect()->route('tickets.show', $payment->registration->ticket->id)
+                ->with('success', 'Pembayaran berhasil diverifikasi oleh Midtrans Sandbox! Tiket resmi telah aktif.');
+        }
+
+        return back()->with('warning', 'Status pembayaran saat ini masih: ' . strtoupper($payment->status) . '. Selesaikan pembayaran di simulator QRIS Midtrans.');
+    }
+
+    private function checkMidtransStatusDirectly(Payment $payment)
+    {
+        try {
+            Config::$serverKey = config('midtrans.server_key');
+            Config::$isProduction = false;
+
+            $status = Transaction::status($payment->order_id);
+
+            if ($status) {
+                $statusArray = (array) $status;
+                $txStatus = $statusArray['transaction_status'] ?? '';
+                $fraud = $statusArray['fraud_status'] ?? '';
+                $paymentType = $statusArray['payment_type'] ?? 'midtrans';
+
+                if ($txStatus === 'settlement' || ($txStatus === 'capture' && $fraud === 'accept')) {
+                    $this->markAsPaid($payment, $payment->registration, $paymentType);
+                } elseif (in_array($txStatus, ['cancel', 'deny', 'expire'])) {
+                    $payment->update(['status' => 'failed']);
+                }
+            }
+        } catch (\Exception $e) {
+            // Belum ada transaksi yang dibuat di simulator
+        }
+    }
+
     public function simulateSuccess(Request $request, Payment $payment)
     {
         $registration = $payment->registration;
@@ -92,42 +133,12 @@ class PaymentController extends Controller
             abort(403, 'Akses tidak diizinkan.');
         }
 
-        DB::beginTransaction();
-        try {
-            $payment->update([
-                'status' => 'success',
-                'metode_pembayaran' => $request->input('payment_type', 'bank_transfer_simulator'),
-                'paid_at' => now(),
-            ]);
+        $this->markAsPaid($payment, $registration, $request->input('payment_type', 'QRIS Midtrans Sandbox'));
 
-            $registration->update([
-                'status' => 'lunas',
-            ]);
-
-            // Terbitkan Tiket Digital
-            if (!$registration->ticket) {
-                $kodeTiket = 'TIX-' . strtoupper(Str::random(4)) . '-' . rand(1000, 9999);
-                Ticket::create([
-                    'registration_id' => $registration->id,
-                    'kode_tiket' => $kodeTiket,
-                    'qr_code' => $kodeTiket,
-                    'status' => 'aktif',
-                ]);
-            }
-
-            DB::commit();
-
-            return redirect()->route('tickets.show', $registration->ticket->id)
-                ->with('success', 'Pembayaran berhasil diverifikasi! Tiket digital Anda telah aktif.');
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return back()->with('error', 'Gagal memproses pembayaran: ' . $e->getMessage());
-        }
+        return redirect()->route('tickets.show', $registration->ticket->id)
+            ->with('success', 'Pembayaran berhasil diverifikasi! Tiket digital Anda telah aktif.');
     }
 
-    /**
-     * Webhook/Notification Handler dari Midtrans
-     */
     public function handleCallback(Request $request)
     {
         $payload = $request->getContent();
@@ -148,14 +159,10 @@ class PaymentController extends Controller
 
         $registration = $payment->registration;
 
-        if ($transactionStatus == 'capture') {
-            if ($fraudStatus == 'accept') {
-                $this->markAsPaid($payment, $registration, $notification->payment_type ?? 'credit_card');
-            }
+        if ($transactionStatus == 'capture' && $fraudStatus == 'accept') {
+            $this->markAsPaid($payment, $registration, $notification->payment_type ?? 'credit_card');
         } elseif ($transactionStatus == 'settlement') {
             $this->markAsPaid($payment, $registration, $notification->payment_type ?? 'midtrans');
-        } elseif ($transactionStatus == 'pending') {
-            $payment->update(['status' => 'pending']);
         } elseif (in_array($transactionStatus, ['deny', 'expire', 'cancel'])) {
             $payment->update(['status' => 'failed']);
             $registration->update(['status' => 'batal']);

@@ -12,6 +12,7 @@ class Payment extends Model
         'metode_pembayaran',
         'order_id',
         'snap_token',
+        'payment_url',
         'jumlah',
         'status',
         'paid_at',

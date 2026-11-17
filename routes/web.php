@@ -34,8 +34,9 @@ Route::middleware('auth')->group(function () {
     Route::post('/workshops/{workshop}/register', [RegistrationController::class, 'store'])->name('registrations.store');
     Route::get('/registrations/{registration}', [RegistrationController::class, 'show'])->name('registrations.show');
 
-    // Pembayaran & Simulasi
+    // Pembayaran Midtrans Resmi
     Route::get('/payments/{registration}', [PaymentController::class, 'show'])->name('payments.show');
+    Route::post('/payments/{payment}/check-status', [PaymentController::class, 'checkStatus'])->name('payments.check-status');
     Route::post('/payments/{payment}/simulate-success', [PaymentController::class, 'simulateSuccess'])->name('payments.simulate-success');
 
     // Tiket Digital
