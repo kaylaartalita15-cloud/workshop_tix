@@ -13,7 +13,7 @@
 
             <div class="absolute bottom-4 left-6 right-6 flex items-center justify-between">
                 <div>
-                    <span class="text-[10px] font-bold px-2.5 py-0.5 bg-emerald-500 text-slate-950 rounded uppercase">
+                    <span class="text-[10px] font-bold px-2.5 py-0.5 bg-emerald-500 text-slate-950 rounded uppercase font-mono">
                         {{ $registration->workshop->kategori }}
                     </span>
                     <h2 class="heading-font text-lg font-bold text-white mt-1">{{ $registration->workshop->nama_workshop }}</h2>
@@ -39,36 +39,39 @@
                 </div>
 
                 <div class="flex justify-between items-center text-xs border-b border-slate-800 pb-3">
-                    <span class="text-slate-400">Status Alokasi Tiket:</span>
+                    <span class="text-slate-400">Alokasi Tiket:</span>
                     <span class="font-mono text-emerald-400 font-bold bg-emerald-500/10 px-2.5 py-1 rounded border border-emerald-500/20">
-                        <i class="fa-solid fa-lock mr-1"></i> 1 Tiket diamankan untuk Anda
+                        <i class="fa-solid fa-lock mr-1"></i> 1 Tiket diamankan
                     </span>
                 </div>
 
                 <div class="flex justify-between items-center text-sm pt-2">
-                    <span class="font-bold text-slate-300">Total Tagihan Tiket:</span>
+                    <span class="font-bold text-slate-300">Total Tagihan:</span>
                     <span class="heading-font text-2xl font-black text-emerald-400">
                         Rp {{ number_format($payment->jumlah, 0, ',', '.') }}
                     </span>
                 </div>
             </div>
 
-            <!-- Tombol Trigger Pop-up Modal Pembayaran -->
+            <!-- Tombol Trigger Pop-up Midtrans Snap Asli -->
             <div class="space-y-4">
-                <button type="button" onclick="openPaymentModal()" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black py-4 px-4 rounded-xl shadow-lg shadow-emerald-500/25 transition duration-200 flex items-center justify-center gap-2 text-sm">
+                <button type="button" id="pay-button" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black py-4 px-4 rounded-xl shadow-lg shadow-emerald-500/25 transition duration-200 flex items-center justify-center gap-2 text-sm">
                     <i class="fa-solid fa-credit-card"></i>
-                    <span>Bayar Sekarang (Buka Pop-Up Midtrans)</span>
+                    <span>Bayar Sekarang (Buka Midtrans Snap Popup)</span>
                 </button>
 
-                <p class="text-[11px] text-center text-slate-400">
-                    Pilih metode pembayaran (Virtual Account, QRIS Midtrans Dummy, atau Kartu Kredit).
-                </p>
+                <!-- Opsional Fallback jika Sandbox Key belum dimasukkan ke .env -->
+                <div class="pt-2 text-center">
+                    <button type="button" onclick="showInternalModal()" class="text-xs text-slate-400 hover:text-emerald-400 underline font-semibold">
+                        Gunakan Simulator Simulasi QRIS / VA (Jika Server Key Sandbox Belum Diisi)
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- POP-UP MODAL PEMBAYARAN MIDTRANS SANDBOX -->
+<!-- POP-UP MODAL SIMULATOR CADANGAN (Bila user offline atau key sandbox belum diset) -->
 <div id="payment-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm hidden opacity-0 transition-opacity duration-300">
     <div class="bg-[#0f172a] border border-slate-800 rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl transform scale-95 transition-transform duration-300 max-h-[90vh] flex flex-col" id="modal-container">
         <!-- Header Pop-Up -->
@@ -78,8 +81,8 @@
                     <i class="fa-solid fa-shield"></i>
                 </div>
                 <div>
-                    <h3 class="heading-font text-base font-bold text-white leading-tight">Pilih Pembayaran Midtrans</h3>
-                    <span class="text-[11px] font-mono text-emerald-400 font-semibold">Midtrans Sandbox Simulator</span>
+                    <h3 class="heading-font text-base font-bold text-white leading-tight">Simulator Midtrans Sandbox</h3>
+                    <span class="text-[11px] font-mono text-emerald-400 font-semibold">Offline Demo Fallback</span>
                 </div>
             </div>
             <button type="button" onclick="closePaymentModal()" class="w-8 h-8 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition">
@@ -89,7 +92,6 @@
 
         <!-- Body Pop-Up Scrollable -->
         <div class="p-5 sm:p-6 space-y-5 overflow-y-auto flex-1">
-            <!-- Ringkasan Singkat -->
             <div class="p-4 bg-[#090d16] rounded-2xl border border-slate-800 flex items-center justify-between">
                 <div>
                     <span class="text-[10px] text-slate-400 uppercase font-bold block">Workshop Dipilih</span>
@@ -107,7 +109,7 @@
                 <div>
                     <label class="block text-xs font-bold text-slate-300 uppercase mb-2">Pilih Kanal Pembayaran:</label>
                     <div class="space-y-2.5">
-                        <!-- Pilihan 1: QRIS Midtrans Dummy (Rekomendasi) -->
+                        <!-- Pilihan 1: QRIS Midtrans Dummy -->
                         <div onclick="selectPaymentMethod(this, 'qris')"
                              class="payment-option p-4 rounded-2xl bg-[#090d16] border-2 border-emerald-500 bg-emerald-500/10 cursor-pointer transition-all duration-200 flex items-center justify-between group">
                             <div class="flex items-center space-x-3.5">
@@ -118,7 +120,7 @@
                                 <div>
                                     <div class="flex items-center gap-2">
                                         <span class="text-xs font-bold text-white group-hover:text-emerald-400 transition">QRIS Midtrans Sandbox</span>
-                                        <span class="text-[9px] font-bold font-mono bg-emerald-400/20 text-emerald-300 px-1.5 py-0.5 rounded">Rekomendasi QR</span>
+                                        <span class="text-[9px] font-bold font-mono bg-emerald-400/20 text-emerald-300 px-1.5 py-0.5 rounded">Rekomendasi</span>
                                     </div>
                                     <span class="text-[11px] text-slate-400 block mt-0.5">Scan kode barcode QRIS langsung di layar</span>
                                 </div>
@@ -128,7 +130,6 @@
 
                         <!-- Panel Detail Tampilan QRIS Midtrans Dummy -->
                         <div id="qris-preview-box" class="p-5 bg-white text-slate-900 rounded-2xl shadow-inner border-2 border-emerald-500/40 text-center space-y-3 transition-all duration-300">
-                            <!-- Logo Midtrans & QRIS Header -->
                             <div class="flex items-center justify-between border-b border-slate-200 pb-2 px-1">
                                 <div class="flex items-center space-x-1.5">
                                     <span class="bg-[#002855] text-white text-[10px] font-extrabold px-2 py-0.5 rounded tracking-wider">midtrans</span>
@@ -140,7 +141,6 @@
                                 </div>
                             </div>
 
-                            <!-- Barcode QR Code Dummy Midtrans -->
                             <div class="py-1">
                                 <div class="inline-block p-3 bg-white border border-slate-300 rounded-2xl shadow-sm">
                                     <img src="https://quickchart.io/qr?text=MIDTRANS-SANDBOX-QRIS-ORDER-{{ $payment->order_id }}-NOMINAL-{{ (int)$payment->jumlah }}&size=180&margin=1"
@@ -175,42 +175,9 @@
                             </div>
                             <i class="fa-solid fa-building-columns text-slate-500 text-lg"></i>
                         </div>
-
-                        <!-- Pilihan 3: Mandiri Bill Payment -->
-                        <div onclick="selectPaymentMethod(this, 'mandiri')"
-                             class="payment-option p-4 rounded-2xl bg-[#090d16] border-2 border-slate-800 hover:border-slate-700 cursor-pointer transition-all duration-200 flex items-center justify-between group">
-                            <div class="flex items-center space-x-3.5">
-                                <div class="radio-indicator w-5 h-5 rounded-full border-2 border-slate-600 flex items-center justify-center text-transparent text-[10px]">
-                                    <i class="fa-solid fa-check"></i>
-                                </div>
-                                <input type="radio" name="payment_type" value="Mandiri Bill Payment (Sandbox)" class="hidden">
-                                <div>
-                                    <span class="text-xs font-bold text-white group-hover:text-emerald-400 transition">Mandiri Bill Payment</span>
-                                    <span class="text-[11px] text-slate-400 font-mono block mt-0.5">Kode Perusahaan: 70012</span>
-                                </div>
-                            </div>
-                            <i class="fa-solid fa-landmark text-slate-500 text-lg"></i>
-                        </div>
-
-                        <!-- Pilihan 4: Kartu Kredit Test -->
-                        <div onclick="selectPaymentMethod(this, 'cc')"
-                             class="payment-option p-4 rounded-2xl bg-[#090d16] border-2 border-slate-800 hover:border-slate-700 cursor-pointer transition-all duration-200 flex items-center justify-between group">
-                            <div class="flex items-center space-x-3.5">
-                                <div class="radio-indicator w-5 h-5 rounded-full border-2 border-slate-600 flex items-center justify-center text-transparent text-[10px]">
-                                    <i class="fa-solid fa-check"></i>
-                                </div>
-                                <input type="radio" name="payment_type" value="Credit Card Test (Sandbox)" class="hidden">
-                                <div>
-                                    <span class="text-xs font-bold text-white group-hover:text-emerald-400 transition">Kartu Kredit / Debit Online Test</span>
-                                    <span class="text-[11px] text-slate-400 font-mono block mt-0.5">Visa / Mastercard 3DS Simulator</span>
-                                </div>
-                            </div>
-                            <i class="fa-solid fa-credit-card text-slate-500 text-lg"></i>
-                        </div>
                     </div>
                 </div>
 
-                <!-- Tombol Konfirmasi Bayar Lunas di dalam Pop-up -->
                 <div class="pt-2">
                     <button type="submit" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black py-4 px-4 rounded-xl shadow-lg shadow-emerald-500/25 transition flex items-center justify-center gap-2 text-xs">
                         <i class="fa-solid fa-circle-check"></i>
@@ -220,9 +187,8 @@
             </form>
         </div>
 
-        <!-- Footer Pop-up -->
         <div class="px-6 py-3.5 bg-[#090d16] border-t border-slate-800 flex items-center justify-between text-[11px] text-slate-500 flex-shrink-0">
-            <span><i class="fa-solid fa-shield-halved text-emerald-400 mr-1"></i> Midtrans Sandbox Simulator</span>
+            <span>Midtrans Sandbox Verified</span>
             <button type="button" onclick="closePaymentModal()" class="text-slate-400 hover:text-white font-semibold">Tutup</button>
         </div>
     </div>
@@ -230,12 +196,40 @@
 @endsection
 
 @push('scripts')
-@if(!str_starts_with($snapToken, 'DEMO_SNAP_'))
+<!-- Load Midtrans Snap Javascript SDK Sandbox -->
 <script src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="{{ $clientKey }}"></script>
-@endif
+
 <script type="text/javascript">
+    document.getElementById('pay-button').onclick = function () {
+        var snapToken = "{{ $snapToken }}";
+
+        // Buka Pop-Up Midtrans Snap Resmi
+        if (typeof window.snap !== 'undefined' && snapToken && !snapToken.startsWith('DEMO_SNAP_')) {
+            window.snap.pay(snapToken, {
+                onSuccess: function(result){
+                    // Redirect atau submit verifikasi sukses
+                    var form = document.getElementById('simulate-form');
+                    if (form) form.submit();
+                },
+                onPending: function(result){
+                    alert("Pembayaran Anda sedang menunggu penyelesaian.");
+                    location.reload();
+                },
+                onError: function(result){
+                    alert("Pembayaran Snap gagal. Menampilkan modal simulator...");
+                    showInternalModal();
+                },
+                onClose: function(){
+                    alert('Anda menutup jendela pembayaran sebelum transaksi selesai.');
+                }
+            });
+        } else {
+            // Jika belum memasukkan Server Key Midtrans asli di .env, buka simulator modal
+            showInternalModal();
+        }
+    };
+
     function selectPaymentMethod(element, type) {
-        // Reset semua pilihan
         document.querySelectorAll('.payment-option').forEach(function(el) {
             el.classList.remove('border-emerald-500', 'bg-emerald-500/10');
             el.classList.add('border-slate-800');
@@ -250,7 +244,6 @@
             }
         });
 
-        // Aktifkan pilihan yang di-klik
         element.classList.remove('border-slate-800');
         element.classList.add('border-emerald-500', 'bg-emerald-500/10');
 
@@ -266,7 +259,6 @@
             currentIndicator.classList.add('border-emerald-400', 'bg-emerald-500', 'text-slate-950');
         }
 
-        // Tampilkan box QRIS hanya jika opsi QRIS yang aktif
         var qrisBox = document.getElementById('qris-preview-box');
         if (qrisBox) {
             if (type === 'qris') {
@@ -277,7 +269,7 @@
         }
     }
 
-    function openPaymentModal() {
+    function showInternalModal() {
         var modal = document.getElementById('payment-modal');
         var container = document.getElementById('modal-container');
         modal.classList.remove('hidden');
