@@ -61,7 +61,7 @@
                 </button>
 
                 <p class="text-[11px] text-center text-slate-400">
-                    Klik tombol di atas untuk memunculkan pop-up jendela metode pembayaran resmi.
+                    Klik tombol di atas untuk memilih metode bank pembayaran.
                 </p>
             </div>
         </div>
@@ -78,8 +78,8 @@
                     <i class="fa-solid fa-shield"></i>
                 </div>
                 <div>
-                    <h3 class="heading-font text-base font-bold text-white leading-tight">Payment Gateway Pop-Up</h3>
-                    <span class="text-[11px] font-mono text-emerald-400 font-semibold">Midtrans Sandbox Integrated</span>
+                    <h3 class="heading-font text-base font-bold text-white leading-tight">Pilih Pembayaran Midtrans</h3>
+                    <span class="text-[11px] font-mono text-emerald-400 font-semibold">Sandbox Simulation Mode</span>
                 </div>
             </div>
             <button type="button" onclick="closePaymentModal()" class="w-8 h-8 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition">
@@ -96,69 +96,100 @@
                     <span class="text-xs font-bold text-white">{{ $registration->workshop->nama_workshop }}</span>
                 </div>
                 <div class="text-right">
-                    <span class="text-[10px] text-slate-400 uppercase font-bold block">Nominal</span>
+                    <span class="text-[10px] text-slate-400 uppercase font-bold block">Total Bayar</span>
                     <span class="text-base font-black text-emerald-400">Rp {{ number_format($payment->jumlah, 0, ',', '.') }}</span>
                 </div>
             </div>
 
-            <!-- Pilihan Metode Pembayaran Sandbox -->
+            <!-- Form Pilihan Bank / Metode Pembayaran Interaktif -->
             <form id="simulate-form" action="{{ route('payments.simulate-success', $payment->id) }}" method="POST" class="space-y-4">
                 @csrf
                 <div>
-                    <label class="block text-xs font-bold text-slate-300 uppercase mb-2">Pilih Kanal Pembayaran Sandbox:</label>
-                    <div class="space-y-2">
-                        <!-- Pilihan 1: Virtual Account -->
-                        <label class="flex items-center justify-between p-3.5 rounded-xl bg-[#090d16] border border-slate-800 hover:border-emerald-500/50 cursor-pointer transition">
-                            <div class="flex items-center space-x-3">
-                                <input type="radio" name="payment_type" value="BCA Virtual Account (Sandbox)" checked class="text-emerald-500 focus:ring-0">
+                    <label class="block text-xs font-bold text-slate-300 uppercase mb-2">Pilih Metode Pembayaran:</label>
+                    <div class="space-y-2.5">
+                        <!-- Pilihan 1: BCA VA -->
+                        <div onclick="selectPaymentMethod(this)"
+                             class="payment-option p-4 rounded-2xl bg-[#090d16] border-2 border-emerald-500 bg-emerald-500/10 cursor-pointer transition-all duration-200 flex items-center justify-between group">
+                            <div class="flex items-center space-x-3.5">
+                                <div class="radio-indicator w-5 h-5 rounded-full border-2 border-emerald-400 flex items-center justify-center bg-emerald-500 text-slate-950 text-[10px] font-black">
+                                    <i class="fa-solid fa-check"></i>
+                                </div>
+                                <input type="radio" name="payment_type" value="BCA Virtual Account (Sandbox)" checked class="hidden">
                                 <div>
-                                    <span class="text-xs font-bold text-white block">Bank BCA Virtual Account</span>
-                                    <span class="text-[10px] text-slate-400 font-mono">VA: 8277 0812 3456 7890</span>
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-xs font-bold text-white group-hover:text-emerald-400 transition">BCA Virtual Account</span>
+                                        <span class="text-[9px] font-bold font-mono bg-emerald-400/20 text-emerald-300 px-1.5 py-0.5 rounded">Rekomendasi</span>
+                                    </div>
+                                    <span class="text-[11px] text-slate-400 font-mono block mt-0.5">No. VA: 8277 0812 3456 7890</span>
                                 </div>
                             </div>
-                            <span class="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded font-mono">Otomatis</span>
-                        </label>
+                            <i class="fa-solid fa-building-columns text-emerald-400 text-lg"></i>
+                        </div>
 
-                        <!-- Pilihan 2: QRIS / GoPay -->
-                        <label class="flex items-center justify-between p-3.5 rounded-xl bg-[#090d16] border border-slate-800 hover:border-emerald-500/50 cursor-pointer transition">
-                            <div class="flex items-center space-x-3">
-                                <input type="radio" name="payment_type" value="QRIS / GoPay (Sandbox)" class="text-emerald-500 focus:ring-0">
+                        <!-- Pilihan 2: Mandiri VA -->
+                        <div onclick="selectPaymentMethod(this)"
+                             class="payment-option p-4 rounded-2xl bg-[#090d16] border-2 border-slate-800 hover:border-slate-700 cursor-pointer transition-all duration-200 flex items-center justify-between group">
+                            <div class="flex items-center space-x-3.5">
+                                <div class="radio-indicator w-5 h-5 rounded-full border-2 border-slate-600 flex items-center justify-center text-transparent text-[10px]">
+                                    <i class="fa-solid fa-check"></i>
+                                </div>
+                                <input type="radio" name="payment_type" value="Mandiri Bill Payment (Sandbox)" class="hidden">
                                 <div>
-                                    <span class="text-xs font-bold text-white block">QRIS Instant (GoPay / Dana / OVO)</span>
-                                    <span class="text-[10px] text-slate-400">Pindai QR simulator via ponsel</span>
+                                    <span class="text-xs font-bold text-white group-hover:text-emerald-400 transition">Mandiri Bill Payment</span>
+                                    <span class="text-[11px] text-slate-400 font-mono block mt-0.5">Kode Perusahaan: 70012</span>
                                 </div>
                             </div>
-                            <span class="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded font-mono">Instant</span>
-                        </label>
+                            <i class="fa-solid fa-landmark text-slate-500 text-lg"></i>
+                        </div>
 
-                        <!-- Pilihan 3: Kartu Kredit Test -->
-                        <label class="flex items-center justify-between p-3.5 rounded-xl bg-[#090d16] border border-slate-800 hover:border-emerald-500/50 cursor-pointer transition">
-                            <div class="flex items-center space-x-3">
-                                <input type="radio" name="payment_type" value="Credit Card Test (Sandbox)" class="text-emerald-500 focus:ring-0">
+                        <!-- Pilihan 3: QRIS Instant (GoPay / Dana / OVO) -->
+                        <div onclick="selectPaymentMethod(this)"
+                             class="payment-option p-4 rounded-2xl bg-[#090d16] border-2 border-slate-800 hover:border-slate-700 cursor-pointer transition-all duration-200 flex items-center justify-between group">
+                            <div class="flex items-center space-x-3.5">
+                                <div class="radio-indicator w-5 h-5 rounded-full border-2 border-slate-600 flex items-center justify-center text-transparent text-[10px]">
+                                    <i class="fa-solid fa-check"></i>
+                                </div>
+                                <input type="radio" name="payment_type" value="QRIS / GoPay (Sandbox)" class="hidden">
                                 <div>
-                                    <span class="text-xs font-bold text-white block">Kartu Kredit / Debit Online Test</span>
-                                    <span class="text-[10px] text-slate-400 font-mono">4811-1111-1111-1114</span>
+                                    <span class="text-xs font-bold text-white group-hover:text-emerald-400 transition">QRIS Instant (GoPay / Dana / OVO)</span>
+                                    <span class="text-[11px] text-slate-400 block mt-0.5">Scan kode barcode QR secara instan</span>
                                 </div>
                             </div>
-                            <span class="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded font-mono">3DS Secure</span>
-                        </label>
+                            <i class="fa-solid fa-qrcode text-slate-500 text-lg"></i>
+                        </div>
+
+                        <!-- Pilihan 4: Kartu Kredit Test -->
+                        <div onclick="selectPaymentMethod(this)"
+                             class="payment-option p-4 rounded-2xl bg-[#090d16] border-2 border-slate-800 hover:border-slate-700 cursor-pointer transition-all duration-200 flex items-center justify-between group">
+                            <div class="flex items-center space-x-3.5">
+                                <div class="radio-indicator w-5 h-5 rounded-full border-2 border-slate-600 flex items-center justify-center text-transparent text-[10px]">
+                                    <i class="fa-solid fa-check"></i>
+                                </div>
+                                <input type="radio" name="payment_type" value="Credit Card Test (Sandbox)" class="hidden">
+                                <div>
+                                    <span class="text-xs font-bold text-white group-hover:text-emerald-400 transition">Kartu Kredit / Debit Test</span>
+                                    <span class="text-[11px] text-slate-400 font-mono block mt-0.5">Visa / Mastercard 3DS Simulator</span>
+                                </div>
+                            </div>
+                            <i class="fa-solid fa-credit-card text-slate-500 text-lg"></i>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Tombol Konfirmasi Bayar Lunas di dalam Pop-up -->
                 <div class="pt-2">
-                    <button type="submit" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black py-3.5 px-4 rounded-xl shadow-lg shadow-emerald-500/20 transition flex items-center justify-center gap-2 text-xs">
+                    <button type="submit" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black py-4 px-4 rounded-xl shadow-lg shadow-emerald-500/25 transition flex items-center justify-center gap-2 text-xs">
                         <i class="fa-solid fa-circle-check"></i>
-                        <span>Konfirmasi Pembayaran Lunas Sekarang</span>
+                        <span id="btn-pay-text">Bayar Sekarang via BCA Virtual Account</span>
                     </button>
                 </div>
             </form>
         </div>
 
         <!-- Footer Pop-up -->
-        <div class="px-6 py-3 bg-[#090d16] border-t border-slate-800 flex items-center justify-between text-[10px] text-slate-500">
-            <span>Enkripsi 256-Bit SSL Secured</span>
-            <button type="button" onclick="closePaymentModal()" class="text-slate-400 hover:text-white">Batal</button>
+        <div class="px-6 py-3.5 bg-[#090d16] border-t border-slate-800 flex items-center justify-between text-[11px] text-slate-500">
+            <span><i class="fa-solid fa-shield-halved text-emerald-400 mr-1"></i> Sandbox Test Secure</span>
+            <button type="button" onclick="closePaymentModal()" class="text-slate-400 hover:text-white font-semibold">Tutup</button>
         </div>
     </div>
 </div>
@@ -169,35 +200,40 @@
 <script src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="{{ $clientKey }}"></script>
 @endif
 <script type="text/javascript">
-    function openPaymentModal() {
-        var snapToken = "{{ $snapToken }}";
-        
-        // Jika token Snap Midtrans tersedia dan bukan demo offline, coba buka Snap Popup asli terlebih dahulu
-        if (typeof window.snap !== 'undefined' && snapToken && !snapToken.startsWith('DEMO_SNAP_')) {
-            window.snap.pay(snapToken, {
-                onSuccess: function(result){
-                    document.getElementById('simulate-form').submit();
-                },
-                onPending: function(result){
-                    alert("Menunggu pembayaran dari Anda.");
-                    location.reload();
-                },
-                onError: function(result){
-                    // Jika Snap gateway error, otomatis tampilkan modal popup internal
-                    showInternalModal();
-                },
-                onClose: function(){
-                    // User menutup Snap, tampilkan modal popup cadangan
-                    showInternalModal();
-                }
-            });
-        } else {
-            // Langsung tampilkan modal pop-up interaktif
-            showInternalModal();
+    function selectPaymentMethod(element) {
+        // Reset semua pilihan
+        document.querySelectorAll('.payment-option').forEach(function(el) {
+            el.classList.remove('border-emerald-500', 'bg-emerald-500/10');
+            el.classList.add('border-slate-800');
+
+            var radio = el.querySelector('input[type="radio"]');
+            if (radio) radio.checked = false;
+
+            var indicator = el.querySelector('.radio-indicator');
+            if (indicator) {
+                indicator.classList.remove('border-emerald-400', 'bg-emerald-500', 'text-slate-950');
+                indicator.classList.add('border-slate-600', 'text-transparent');
+            }
+        });
+
+        // Aktifkan pilihan yang di-klik
+        element.classList.remove('border-slate-800');
+        element.classList.add('border-emerald-500', 'bg-emerald-500/10');
+
+        var currentRadio = element.querySelector('input[type="radio"]');
+        if (currentRadio) {
+            currentRadio.checked = true;
+            document.getElementById('btn-pay-text').innerText = 'Bayar Sekarang via ' + currentRadio.value.replace(' (Sandbox)', '');
+        }
+
+        var currentIndicator = element.querySelector('.radio-indicator');
+        if (currentIndicator) {
+            currentIndicator.classList.remove('border-slate-600', 'text-transparent');
+            currentIndicator.classList.add('border-emerald-400', 'bg-emerald-500', 'text-slate-950');
         }
     }
 
-    function showInternalModal() {
+    function openPaymentModal() {
         var modal = document.getElementById('payment-modal');
         var container = document.getElementById('modal-container');
         modal.classList.remove('hidden');
