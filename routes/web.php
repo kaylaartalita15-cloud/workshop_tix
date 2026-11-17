@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CheckinController;
 use App\Http\Controllers\PanitiaController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\RegistrationController;
@@ -45,6 +46,10 @@ Route::middleware('auth')->group(function () {
 Route::middleware(['auth', 'panitia'])->prefix('panitia')->name('panitia.')->group(function () {
     Route::get('/dashboard', [PanitiaController::class, 'dashboard'])->name('dashboard');
     Route::get('/pendaftar', [PanitiaController::class, 'pendaftar'])->name('pendaftar');
+
+    // Fitur Check-In & Scanner Tiket (Point 04 & 06 LKPD)
+    Route::get('/checkin', [CheckinController::class, 'index'])->name('checkin.index');
+    Route::post('/checkin', [CheckinController::class, 'process'])->name('checkin.process');
 
     // CRUD Workshop Panitia
     Route::get('/workshops', [WorkshopController::class, 'adminIndex'])->name('workshops.index');

@@ -7,16 +7,20 @@
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
             <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-800">Dashboard Panitia</h1>
-            <p class="text-sm text-slate-500 mt-1">Ringkasan pendaftaran workshop IT dan manajemen tiket</p>
+            <p class="text-sm text-slate-500 mt-1">Monitoring pendaftaran, tiket, pendapatan, dan check-in workshop</p>
         </div>
-        <div class="flex items-center gap-3">
+        <div class="flex flex-wrap items-center gap-3">
+            <a href="{{ route('panitia.checkin.index') }}" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition shadow flex items-center gap-2">
+                <i class="fa-solid fa-qrcode"></i>
+                <span>Scanner / Check-In Tiket</span>
+            </a>
             <a href="{{ route('panitia.workshops.create') }}" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition shadow flex items-center gap-2">
                 <i class="fa-solid fa-plus"></i>
-                <span>Tambah Workshop Baru</span>
+                <span>Tambah Workshop</span>
             </a>
             <a href="{{ route('panitia.pendaftar') }}" class="bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition shadow flex items-center gap-2">
                 <i class="fa-solid fa-users"></i>
-                <span>Lihat Semua Pendaftar</span>
+                <span>Data Pendaftar (Uji N+1)</span>
             </a>
         </div>
     </div>
@@ -58,7 +62,7 @@
                 <i class="fa-solid fa-wallet"></i>
             </div>
             <div>
-                <span class="text-xs font-semibold text-slate-400 uppercase">Total Pendapatan</span>
+                <span class="text-xs font-semibold text-slate-400 uppercase">Total Pemasukan</span>
                 <div class="text-2xl font-bold text-amber-600">Rp {{ number_format($totalPendapatan, 0, ',', '.') }}</div>
             </div>
         </div>
@@ -67,9 +71,13 @@
     <!-- Pendaftar Terakhir -->
     <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
         <div class="p-6 border-b border-slate-100 flex items-center justify-between">
-            <h2 class="font-bold text-slate-800 text-lg">Pendaftar Terbaru</h2>
-            <a href="{{ route('panitia.pendaftar') }}" class="text-xs font-semibold text-indigo-600 hover:underline">
-                Lihat Semua &rarr;
+            <div>
+                <h2 class="font-bold text-slate-800 text-lg">Pendaftar Terbaru</h2>
+                <p class="text-xs text-slate-400">Transaksi registrasi dan pembayaran yang baru masuk</p>
+            </div>
+            <a href="{{ route('panitia.pendaftar') }}" class="text-xs font-bold text-indigo-600 hover:underline flex items-center gap-1">
+                <span>Lihat Semua Pendaftar</span>
+                <i class="fa-solid fa-arrow-right text-[10px]"></i>
             </a>
         </div>
 
